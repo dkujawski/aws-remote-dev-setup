@@ -1,10 +1,10 @@
 # AWS credential configuration guide
 
-Remote developers need valid AWS credentials in order to authenticate against the IAM resources that Terraform provisions in this repository. This guide walks through three common approaches for configuring the AWS CLI and SDK credential chain so that developers can choose the option that best matches their security and compliance requirements.
+Remote developers need valid AWS credentials in order to authenticate against the IAM resources that Terraform provisions in this repository. The Terraform configuration is opinionated: it always loads credentials from the shared AWS CLI credentials file (`~/.aws/credentials`) using a named profile. The steps below describe how administrators and developers should configure that profile.
 
-## 1. Configure a named AWS CLI profile
+## Configure a named AWS CLI profile
 
-Use a named profile when you distribute long-lived access keys for the remote development IAM user. Profiles isolate credentials, making it easy to switch between environments.
+Use a named profile when you distribute long-lived access keys for the remote development IAM user. Profiles isolate credentials, making it easy to switch between environments and match the expectations baked into Terraform.
 
 1. Install the [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
 2. Collect the `Access key ID` and `Secret access key` for the IAM user created by Terraform.
@@ -17,62 +17,11 @@ Use a named profile when you distribute long-lived access keys for the remote de
    AWS_PROFILE=remote-dev aws ec2 describe-instances --instance-ids i-0123456789abcdef0
    ```
 
-The CLI stores the profile in `~/.aws/credentials` and `~/.aws/config`. Developers can reference it via the `AWS_PROFILE` environment variable or by using the `--profile` flag with individual CLI commands.
-
-## 2. Use AWS IAM Identity Center (SSO)
-
-If your organization relies on AWS IAM Identity Center (formerly AWS SSO), you can map the remote development IAM group to an account assignment and federate access without managing long-lived keys.
-
-1. Configure an assignment in IAM Identity Center that maps your developers to the AWS account where the Terraform resources were applied.
-2. Grant the assignment permission to assume a role that has the `remote-dev-access` policy attached.
-3. Have developers log in with the AWS CLI:
-   ```bash
-   aws sso login --profile remote-dev-sso
-   ```
-4. Update the profile configuration in `~/.aws/config` so that it references the SSO start URL, region, and role name. A minimal example:
-   ```ini
-   [profile remote-dev-sso]
-   sso_start_url = https://my-sso-portal.awsapps.com/start
-   sso_region = us-east-1
-   sso_account_id = 123456789012
-   sso_role_name = RemoteDevAccess
-   region = us-east-1
-   ```
-
-Once logged in, developers can run commands with `AWS_PROFILE=remote-dev-sso` and the CLI will automatically refresh temporary credentials as needed.
-
-## 3. Leverage credential helpers (aws-vault)
-
-For teams that still use IAM access keys but want to avoid storing them on disk, [aws-vault](https://github.com/99designs/aws-vault) can encrypt credentials and vend short-lived sessions.
-
-1. Install `aws-vault` using your platform's package manager.
-2. Add the access keys to the secure keychain:
-   ```bash
-   aws-vault add remote-dev
-   ```
-3. Execute commands within a temporary session:
-   ```bash
-   aws-vault exec remote-dev -- aws ssm start-session --target i-0123456789abcdef0
-   ```
-
-The helper rotates credentials regularly and protects them using the underlying OS keychain, reducing the risk of key exfiltration.
-
-## Environment variables for automation
-
-Automation tools running in CI/CD pipelines or containerized environments can authenticate using environment variables. Set the following variables before invoking the AWS CLI or Terraform:
-
-```bash
-export AWS_ACCESS_KEY_ID="AKIA..."
-export AWS_SECRET_ACCESS_KEY="<secret>"
-export AWS_SESSION_TOKEN="<optional session token>"
-export AWS_DEFAULT_REGION="us-east-1"
-```
-
-Use short-lived session tokens (for example, generated via IAM roles or STS) whenever possible. Never commit secrets to source control.
+The CLI stores the profile in `~/.aws/credentials` and `~/.aws/config`. Developers can reference it via the `AWS_PROFILE` environment variable or by using the `--profile` flag with individual CLI commands. Terraform also relies on this profile—configure the `profile` variable in `terraform.tfvars` so that it matches the name you specified above.
 
 ## Verifying access
 
-After configuring credentials with any of the methods above, run these quick checks:
+After configuring the profile, run these quick checks:
 
 ```bash
 # Confirm the caller identity matches the remote dev IAM user or role

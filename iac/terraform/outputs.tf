@@ -12,3 +12,13 @@ output "remote_dev_policy_arn" {
   description = "ARN of the policy granting access to remote development instances."
   value       = aws_iam_policy.remote_dev.arn
 }
+
+output "remote_dev_instance_ids" {
+  description = "IDs for the EC2 instances provisioned for remote development."
+  value       = { for name, instance in aws_instance.remote_dev : name => instance.id }
+}
+
+output "remote_dev_instance_arns" {
+  description = "ARNs for the EC2 instances provisioned for remote development."
+  value       = { for name, instance in aws_instance.remote_dev : name => instance.arn }
+}

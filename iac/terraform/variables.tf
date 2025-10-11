@@ -5,9 +5,8 @@ variable "region" {
 }
 
 variable "profile" {
-  description = "Optional named AWS CLI profile Terraform should use. Leave empty to use the default credential chain."
+  description = "Name of the AWS CLI profile (stored in ~/.aws/credentials) Terraform should use."
   type        = string
-  default     = ""
 }
 
 variable "remote_dev_user_name" {
@@ -29,9 +28,37 @@ variable "iam_policy_name" {
 }
 
 variable "dev_instance_arns" {
-  description = "List of EC2 instance ARNs remote developers are allowed to connect to and manage."
+  description = "List of EC2 instance ARNs remote developers are allowed to connect to and manage in addition to the instances this configuration creates."
   type        = list(string)
   default     = []
+}
+
+variable "dev_instances" {
+  description = "Map describing the remote development EC2 instances to create."
+  type = map(object({
+    ami_id                = string
+    instance_type         = string
+    subnet_id             = string
+    security_group_ids    = optional(list(string))
+    iam_instance_profile  = optional(string)
+    key_name              = optional(string)
+    associate_public_ip   = optional(bool)
+    volume_size           = optional(number)
+    volume_type           = optional(string)
+    encrypted             = optional(bool)
+    kms_key_id            = optional(string)
+    tags                  = optional(map(string))
+  }))
+  default = {}
+}
+
+variable "default_dev_instance_tags" {
+  description = "Base tags applied to every remote development EC2 instance."
+  type        = map(string)
+  default = {
+    "ManagedBy" = "terraform"
+    "Purpose"   = "remote-development"
+  }
 }
 
 variable "session_manager_document_arns" {
