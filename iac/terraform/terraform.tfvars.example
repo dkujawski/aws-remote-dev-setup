@@ -1,0 +1,11 @@
+region = "us-east-1"
+profile = "devops"
+remote_dev_user_name = "acme-remote-dev"
+iam_group_name       = "acme-remote-dev"
+iam_policy_name      = "acme-remote-dev"
+dev_instance_arns = [
+  "arn:aws:ec2:us-east-1:123456789012:instance/i-0123456789abcdef0"
+]
+# session_manager_document_arns = [
+#   "arn:aws:ssm:us-east-1::document/AWS-StartSSHSession"
+# ]
