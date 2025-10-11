@@ -1,5 +1,5 @@
-region = "us-east-1"
-profile = "devops"
+region = "us-west-2"
+profile = "badassdave"
 remote_dev_user_name = "acme-remote-dev"
 iam_group_name       = "acme-remote-dev"
 iam_policy_name      = "acme-remote-dev"
