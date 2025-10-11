@@ -7,6 +7,14 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  cloud {
+    organization = "Javisrike"
+
+    workspaces {
+      name = "aws-remote-dev-setup"
+    }
+  }
 }
 
 provider "aws" {
