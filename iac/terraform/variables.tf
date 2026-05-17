@@ -75,3 +75,16 @@ variable "force_destroy_user" {
   type        = bool
   default     = false
 }
+
+variable "posts_lambda_artifact_bucket_name" {
+  description = "Name of the S3 bucket that stores posts Lambda deployment artifacts."
+  type        = string
+}
+
+variable "github_deploy_role_names" {
+  description = "GitHub deploy role names by environment that require posts artifact upload permissions."
+  type = object({
+    dev  = string
+    prod = string
+  })
+}
