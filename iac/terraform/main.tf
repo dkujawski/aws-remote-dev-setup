@@ -18,8 +18,8 @@ terraform {
 }
 
 provider "aws" {
-  region                  = var.region
-  profile                 = var.profile
+  region                   = var.region
+  profile                  = var.profile
   shared_credentials_files = ["~/.aws/credentials"]
 }
 
@@ -189,4 +189,62 @@ resource "aws_iam_policy" "remote_dev" {
 resource "aws_iam_group_policy_attachment" "remote_dev" {
   group      = aws_iam_group.remote_dev.name
   policy_arn = aws_iam_policy.remote_dev.arn
+}
+
+locals {
+  posts_artifact_prefixes = {
+    dev  = "posts-api/dev/*"
+    prod = "posts-api/prod/*"
+  }
+}
+
+data "aws_iam_policy_document" "posts_lambda_artifact_upload" {
+  statement {
+    sid    = "ListPostsArtifactPrefixes"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.posts_lambda_artifact_bucket_name}"
+    ]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values = [
+        local.posts_artifact_prefixes.dev,
+        local.posts_artifact_prefixes.prod,
+      ]
+    }
+  }
+
+  statement {
+    sid    = "UploadPostsArtifacts"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.posts_lambda_artifact_bucket_name}/${local.posts_artifact_prefixes.dev}",
+      "arn:aws:s3:::${var.posts_lambda_artifact_bucket_name}/${local.posts_artifact_prefixes.prod}",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "posts_lambda_artifact_upload" {
+  name        = "posts-lambda-artifact-upload"
+  description = "Scoped permissions for GitHub deploy roles to list/read/upload posts Lambda artifacts"
+  policy      = data.aws_iam_policy_document.posts_lambda_artifact_upload.json
+}
+
+resource "aws_iam_role_policy_attachment" "posts_lambda_artifact_upload_dev" {
+  role       = var.github_deploy_role_names.dev
+  policy_arn = aws_iam_policy.posts_lambda_artifact_upload.arn
+}
+
+resource "aws_iam_role_policy_attachment" "posts_lambda_artifact_upload_prod" {
+  role       = var.github_deploy_role_names.prod
+  policy_arn = aws_iam_policy.posts_lambda_artifact_upload.arn
 }

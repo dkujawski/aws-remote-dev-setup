@@ -27,3 +27,10 @@ dev_instances = {
 # session_manager_document_arns = [
 #   "arn:aws:ssm:us-east-1::document/AWS-StartSSHSession"
 # ]
+
+posts_lambda_artifact_bucket_name = "acme-lambda-artifacts"
+
+github_deploy_role_names = {
+  dev  = "github-actions-deploy-dev"
+  prod = "github-actions-deploy-prod"
+}
